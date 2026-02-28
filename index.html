@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>LLM API · Conjoint Analysis · Code Portfolio</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;1,9..144,300&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #0d0f14;
+    --surface: #13161e;
+    --surface2: #1a1e29;
+    --border: #252a38;
+    --accent: #5b8dee;
+    --accent2: #e87c3e;
+    --accent3: #4ecdc4;
+    --text: #d4d9e8;
+    --text-muted: #6b7492;
+    --text-dim: #3d4460;
+    --code-bg: #0a0c10;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: 16px;
+    line-height: 1.7;
+    min-height: 100vh;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.5;
+  }
+
+  .wrapper { max-width: 1100px; margin: 0 auto; padding: 0 2rem; position: relative; z-index: 1; }
+
+  header {
+    padding: 4rem 0 3rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 3rem;
+  }
+
+  .header-eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .header-eyebrow::after {
+    content: '';
+    flex: 1;
+    max-width: 80px;
+    height: 1px;
+    background: var(--accent);
+    opacity: 0.4;
+  }
+
+  header h1 {
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    font-weight: 300;
+    font-style: italic;
+    line-height: 1.2;
+    color: #e8ecf7;
+    margin-bottom: 1rem;
+  }
+  header h1 em { font-style: normal; color: var(--accent); }
+
+  .header-meta {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap;
+    margin-top: 1.5rem;
+  }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent3); display: inline-block; margin-right: 0.4rem; }
+
+  .toc {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 3rem;
+  }
+  .toc-link {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    text-decoration: none;
+    border: 1px solid var(--border);
+    padding: 0.3rem 0.75rem;
+    border-radius: 2px;
+    transition: all 0.2s;
+  }
+  .toc-link:hover { border-color: var(--accent); color: var(--accent); background: rgba(91,141,238,0.06); }
+
+  .section {
+    margin-bottom: 3.5rem;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeUp 0.5s ease forwards;
+  }
+  @keyframes fadeUp { to { opacity: 1; transform: none; } }
+  .section:nth-child(1) { animation-delay: 0.05s; }
+  .section:nth-child(2) { animation-delay: 0.1s; }
+  .section:nth-child(3) { animation-delay: 0.15s; }
+  .section:nth-child(4) { animation-delay: 0.2s; }
+  .section:nth-child(5) { animation-delay: 0.25s; }
+  .section:nth-child(6) { animation-delay: 0.3s; }
+  .section:nth-child(7) { animation-delay: 0.35s; }
+  .section:nth-child(8) { animation-delay: 0.4s; }
+
+  .section-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.25rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .section-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    margin-top: 0.4rem;
+    flex-shrink: 0;
+    width: 2rem;
+    text-align: right;
+  }
+
+  .section-title-group { flex: 1; }
+
+  .section-title {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #e0e6f5;
+    line-height: 1.3;
+    margin-bottom: 0.3rem;
+  }
+
+  .section-desc {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    font-style: italic;
+  }
+
+  .tags {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    margin-top: 0.5rem;
+  }
+  .tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.15rem 0.5rem;
+    border-radius: 2px;
+    font-weight: 500;
+  }
+  .tag-r    { background: rgba(74,111,165,0.2); color: #7aaae8; border: 1px solid rgba(74,111,165,0.3); }
+  .tag-ai   { background: rgba(124,92,191,0.2); color: #b49de8; border: 1px solid rgba(124,92,191,0.3); }
+  .tag-stat { background: rgba(61,139,110,0.2); color: #6ec4a7; border: 1px solid rgba(61,139,110,0.3); }
+  .tag-data { background: rgba(232,124,62,0.2); color: #e8a47c; border: 1px solid rgba(232,124,62,0.3); }
+
+  .code-wrap {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-left: 3.25rem;
+  }
+
+  .code-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.6rem 1rem;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .code-lang {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+
+  .copy-btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.06em;
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 0.2rem 0.6rem;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.15s;
+  }
+  .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .copy-btn.copied { border-color: var(--accent3); color: var(--accent3); }
+
+  pre {
+    padding: 1.25rem 1.5rem;
+    overflow-x: auto;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem;
+    line-height: 1.75;
+    color: #c4cce6;
+  }
+
+  .kw  { color: #7c8fe8; }
+  .fn  { color: #5bc8c0; }
+  .str { color: #9dba77; }
+  .cm  { color: #4a5270; font-style: italic; }
+  .num { color: #e8a47c; }
+  .op  { color: #d4d9e8; }
+
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 2rem 0;
+    margin-top: 4rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  footer p { font-family: 'DM Mono', monospace; font-size: 0.68rem; color: var(--text-dim); letter-spacing: 0.05em; }
+  .footer-dots { display: flex; gap: 0.4rem; }
+  .footer-dots span { width: 5px; height: 5px; border-radius: 50%; }
+  .fd1 { background: var(--accent); }
+  .fd2 { background: var(--accent2); }
+  .fd3 { background: var(--accent3); }
+
+  ::-webkit-scrollbar { width: 6px; height: 4px; }
+  ::-webkit-scrollbar-track { background: var(--code-bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <header>
+    <div class="header-eyebrow">Code Portfolio &middot; Applied Economics</div>
+    <h1>LLM API for Predicting<br/><em>Human Choices</em> from Survey Data</h1>
+    <p style="font-size:1rem;color:var(--text-muted);max-width:620px;margin-top:0.75rem;">
+      Using large language models as synthetic respondents in conjoint analysis &mdash; comparing AI-predicted choices against real consumer decisions in strawberry purchasing experiments.
+    </p>
+    <div class="header-meta">
+      <span><span class="dot"></span>R &middot; httr &middot; mlogit &middot; gmnl</span>
+      <span><span class="dot" style="background:var(--accent)"></span>GPT-4o &middot; LLaMA 3.1</span>
+      <span><span class="dot" style="background:var(--accent2)"></span>Discrete Choice Modeling</span>
+    </div>
+  </header>
+
+  <nav>
+    <div class="toc">
+      <a href="#s1" class="toc-link">01 &middot; API Setup (GPT)</a>
+      <a href="#s2" class="toc-link">02 &middot; LLaMA 3.1</a>
+      <a href="#s3" class="toc-link">03 &middot; CE Choice Function</a>
+      <a href="#s4" class="toc-link">04 &middot; Data Import</a>
+      <a href="#s5" class="toc-link">05 &middot; Baseline Predictions</a>
+      <a href="#s6" class="toc-link">06 &middot; Conditional Logit</a>
+      <a href="#s7" class="toc-link">07 &middot; Across-Person</a>
+      <a href="#s8" class="toc-link">08 &middot; Within-Person</a>
+    </div>
+  </nav>
+
+  <!-- 01 -->
+  <div class="section" id="s1">
+    <div class="section-header">
+      <span class="section-num">01</span>
+      <div class="section-title-group">
+        <div class="section-title">API Setup &mdash; GPT Model</div>
+        <div class="section-desc">Wrapper to query the UF AI gateway; configurable model and temperature</div>
+        <div class="tags">
+          <span class="tag tag-r">R</span>
+          <span class="tag tag-ai">LLM API</span>
+        </div>
+      </div>
+    </div>
+    <div class="code-wrap">
+      <div class="code-bar">
+        <span class="code-lang">R &middot; httr / jsonlite</span>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      </div>
+<pre><code><span class="kw">library</span>(httr); <span class="kw">library</span>(jsonlite)
+<span class="kw">library</span>(dplyr); <span class="kw">library</span>(tidyverse); <span class="kw">library</span>(purrr); <span class="kw">library</span>(readxl)
+
+api_key  &lt;- <span class="str">"YOUR_API_KEY"</span>
+base_url &lt;- <span class="str">"https://api.ai.it.ufl.edu/v1/chat/completions"</span>
+
+<span class="fn">ask</span> &lt;- <span class="kw">function</span>(user.content, sys.content,
+                 m <span class="op">=</span> <span class="str">"gpt-oss-120b"</span>, tem <span class="op">=</span> <span class="num">0.5</span>) {
+
+  r &lt;- <span class="fn">POST</span>(base_url,
+    <span class="fn">add_headers</span>(Authorization <span class="op">=</span> <span class="fn">paste</span>(<span class="str">"Bearer"</span>, api_key),
+                <span class="str">"Content-Type"</span> <span class="op">=</span> <span class="str">"application/json"</span>),
+    body <span class="op">=</span> <span class="fn">list</span>(
+      model    <span class="op">=</span> m,
+      messages <span class="op">=</span> <span class="fn">list</span>(
+        <span class="fn">list</span>(role <span class="op">=</span> <span class="str">"system"</span>, content <span class="op">=</span> sys.content),
+        <span class="fn">list</span>(role <span class="op">=</span> <span class="str">"user"</span>,   content <span class="op">=</span> user.content)
+      )
+    ),
+    encode      <span class="op">=</span> <span class="str">"json"</span>,
+    temperature <span class="op">=</span> tem,   <span class="cm"># 0 = deterministic, 1 = creative</span>
+    max_tokens  <span class="op">=</span> <span class="num">500</span>
+  )
+
+  <span class="kw">if</span> (<span class="fn">status_code</span>(r) <span class="op">==</span> <span class="num">200</span>) {
+    res    &lt;- <span class="fn">fromJSON</span>(<span class="fn">content</span>(r, <span class="str">"text"</span>))
+    answer &lt;- res$choices$message$content
+    <span class="fn">writeLines</span>(answer)
+    <span class="kw">return</span>(answer)
+  } <span class="kw">else</span> {
+    <span class="fn">cat</span>(<span class="str">"Error:"</span>, <span class="fn">content</span>(r, <span class="str">"text"</span>))
+  }
+}</code></pre>
+    </div>
+  </div>
+
+  <!-- 02 -->
+  <div class="section" id="s2">
+    <div class="section-header">
+      <span class="section-num">02</span>
+      <div class="section-title-group">
+        <div class="section-title">Alternative Model &mdash; LLaMA 3.1 70B</div>
+        <div class="section-desc">Same wrapper adapted for Meta's open-source model; slightly higher temperature (0.7)</div>
+        <div class="tags">
+          <span class="tag tag-r">R</span>
+          <span class="tag tag-ai">LLaMA 3.1</span>
+        </div>
+      </div>
+    </div>
+    <div class="code-wrap">
+      <div class="code-bar">
+        <span class="code-lang">R &middot; httr / jsonlite</span>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      </div>
+<pre><code><span class="cm"># Drop-in replacement: swap model name and raise temperature to 0.7</span>
+<span class="fn">ask</span> &lt;- <span class="kw">function</span>(user.content, sys.content,
+                 m <span class="op">=</span> <span class="str">"llama-3.1-70b-instruct"</span>, tem <span class="op">=</span> <span class="num">0.7</span>) {
+
+  r &lt;- <span class="fn">POST</span>(base_url,
+    <span class="fn">add_headers</span>(Authorization <span class="op">=</span> <span class="fn">paste</span>(<span class="str">"Bearer"</span>, api_key),
+                <span class="str">"Content-Type"</span> <span class="op">=</span> <span class="str">"application/json"</span>),
+    body <span class="op">=</span> <span class="fn">list</span>(
+      model    <span class="op">=</span> m,
+      messages <span class="op">=</span> <span class="fn">list</span>(
+        <span class="fn">list</span>(role <span class="op">=</span> <span class="str">"system"</span>, content <span class="op">=</span> sys.content),
+        <span class="fn">list</span>(role <span class="op">=</span> <span class="str">"user"</span>,   content <span class="op">=</span> user.content)
+      )
+    ),
+    encode      <span class="op">=</span> <span class="str">"json"</span>,
+    temperature <span class="op">=</span> tem,
+    max_tokens  <span class="op">=</span> <span class="num">500</span>
+  )
+
+  <span class="kw">if</span> (<span class="fn">status_code</span>(r) <span class="op">==</span> <span class="num">200</span>) {
+    res    &lt;- <span class="fn">fromJSON</span>(<span class="fn">content</span>(r, <span class="str">"text"</span>))
+    answer &lt;- res$choices$message$content
+    <span class="fn">writeLines</span>(answer)
+    <span class="kw">return</span>(answer)
+  } <span class="kw">else</span> {
+    <span class="fn">cat</span>(<span class="str">"Error:"</span>, <span class="fn">content</span>(r, <span class="str">"text"</span>))
+  }
+}</code></pre>
+    </div>
+  </div>
+
+  <!-- 03 -->
+  <div class="section" id="s3">
+    <div class="section-header">
+      <span class="section-num">03</span>
+      <div class="section-title-group">
+        <div class="section-title">CE Choice Function &mdash; Prompt Engineering</div>
+        <div class="section-desc">Persona-aware system prompt + attribute-level user prompt; model must respond with only 1, 2, or 3</div>
+        <div class="tags">
+          <span class="tag tag-ai">Prompt Design</span>
+          <span class="tag tag-r">R</span>
+        </div>
+      </div>
+    </div>
+    <div class="code-wrap">
+      <div class="code-bar">
+        <span class="code-lang">R &middot; Conjoint Prompt</span>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      </div>
+<pre><code><span class="fn">CE_Choice</span> &lt;- <span class="kw">function</span>(gender, age, edu, income, price_paid,
+                       price1, origins1, method1, review1, bestuse1,
+                       price2, origins2, method2, review2, bestuse2) {
+  <span class="fn">ask</span>(
+    sys.content <span class="op">=</span> <span class="str">"You are a consumer making a real purchase decision while
+shopping for fresh strawberries in a grocery store. You must select one of
+three options: Option 1, Option 2, or Option 3 (neither).
+
+Strawberry price typically ranges from $0.99-$8.99/lb. Consider budget
+constraints -- higher price means less income for other products.
+
+You are the SAME respondent making 14 shopping decisions in sequence.
+Maintain consistency with your demographics and preferences throughout.
+
+ATTRIBUTE DEFINITIONS:
+- Organic: organic farming, limited synthetic inputs
+- Locally produced: grown in the same state as marketed
+- Naturally grown: non-profit alternate farm assurance certification
+- Customer Review: avg. sensory rating (★★★ = best)"</span>,
+
+    user.content <span class="op">=</span> <span class="fn">paste</span>(
+      <span class="str">"You are"</span>, gender, <span class="str">","</span>, age, <span class="str">"years old, with a"</span>, edu,
+      <span class="str">"degree, and annual income of $"</span>, income, <span class="str">"."</span>,
+      <span class="str">"Previously paid $"</span>, price_paid, <span class="str">"for 1 lb of fresh strawberries."</span>,
+      <span class="str">"Respond with ONLY the number 1, 2, or 3."</span>,
+
+      <span class="str">"Option 1:"</span>, method1, <span class="str">", from"</span>, origins1,
+      <span class="str">","</span>, bestuse1, <span class="str">","</span>, review1, <span class="str">"review. Price: $"</span>, price1, <span class="str">"/lb."</span>,
+
+      <span class="str">"Option 2:"</span>, method2, <span class="str">", from"</span>, origins2,
+      <span class="str">","</span>, bestuse2, <span class="str">","</span>, review2, <span class="str">"review. Price: $"</span>, price2, <span class="str">"/lb."</span>,
+
+      <span class="str">"Option 3: I would not choose either product."</span>,
+      sep <span class="op">=</span> <span class="str">" "</span>
+    )
+  )
+}</code></pre>
+    </div>
+  </div>
+
+  <!-- 04 -->
+  <div class="section" id="s4">
+    <div class="section-header">
+      <span class="section-num">04</span>
+      <div class="section-title-group">
+        <div class="section-title">Data Import &amp; Preprocessing</div>
+        <div class="section-desc">Load CE survey data; recode numeric attribute codes to descriptive labels</div>
+        <div class="tags">
+          <span class="tag tag-r">R</span>
+          <span class="tag tag-data">Data Wrangling</span>
+        </div>
+      </div>
+    </div>
+    <div class="code-wrap">
+      <div class="code-bar">
+        <span class="code-lang">R &middot; dplyr / readxl</span>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      </div>
+<pre><code>ce_data &lt;- <span class="fn">read_excel</span>(<span class="str">"Survey_CE.Picture.xlsx"</span>)
+ce_data &lt;- ce_data <span class="op">%&gt;%</span> <span class="fn">filter</span>(<span class="op">!</span><span class="fn">is.na</span>(Income))
+
+ce_data &lt;- ce_data <span class="op">%&gt;%</span>
+  <span class="fn">mutate</span>(
+    Origin <span class="op">=</span> <span class="fn">case_when</span>(
+      Origin <span class="op">==</span> <span class="num">1</span> <span class="op">~</span> <span class="str">"California"</span>,
+      Origin <span class="op">==</span> <span class="num">2</span> <span class="op">~</span> <span class="str">"Florida"</span>,
+      Origin <span class="op">==</span> <span class="num">3</span> <span class="op">~</span> <span class="str">"Mexico"</span>,
+      Origin <span class="op">==</span> <span class="num">4</span> <span class="op">~</span> <span class="str">"Locally Produced"</span>,
+      Origin <span class="op">==</span> <span class="num">5</span> <span class="op">~</span> <span class="str">"US"</span>,
+      TRUE         <span class="op">~</span> <span class="str">"0"</span>
+    ),
+    Method <span class="op">=</span> <span class="fn">case_when</span>(
+      Method <span class="op">==</span> <span class="num">1</span> <span class="op">~</span> <span class="str">"Conventional"</span>,
+      Method <span class="op">==</span> <span class="num">2</span> <span class="op">~</span> <span class="str">"Naturally Grown"</span>,
+      Method <span class="op">==</span> <span class="num">3</span> <span class="op">~</span> <span class="str">"Organic"</span>,
+      TRUE         <span class="op">~</span> <span class="str">"0"</span>
+    ),
+    Review <span class="op">=</span> <span class="fn">case_when</span>(
+      Review <span class="op">==</span> <span class="num">1</span> <span class="op">~</span> <span class="str">"1-star"</span>,
+      Review <span class="op">==</span> <span class="num">2</span> <span class="op">~</span> <span class="str">"2-star"</span>,
+      Review <span class="op">==</span> <span class="num">3</span> <span class="op">~</span> <span class="str">"3-star"</span>,
+      TRUE         <span class="op">~</span> <span class="str">"0"</span>
+    ),
+    Dates <span class="op">=</span> <span class="fn">case_when</span>(
+      Dates <span class="op">==</span> <span class="num">1</span> <span class="op">~</span> <span class="str">"best use within 3 days"</span>,
+      Dates <span class="op">==</span> <span class="num">2</span> <span class="op">~</span> <span class="str">"best use within 5 days"</span>,
+      Dates <span class="op">==</span> <span class="num">3</span> <span class="op">~</span> <span class="str">"best use within 7 days"</span>,
+      TRUE         <span class="op">~</span> <span class="str">"0"</span>
+    )
+  )</code></pre>
+    </div>
+  </div>
+
+  <!-- 05 -->
+  <div class="section" id="s5">
+    <div class="section-header">
+      <span class="section-num">05</span>
+      <div class="section-title-group">
+        <div class="section-title">Baseline AI Predictions &mdash; Resumable Pipeline</div>
+        <div class="section-desc">Iterates over all respondent &times; choice-set combos with checkpoint saving so long API runs can resume after interruption</div>
+        <div class="tags">
+          <span class="tag tag-r">R</span>
+          <span class="tag tag-ai">LLM Inference</span>
+          <span class="tag tag-data">Automation</span>
+        </div>
+      </div>
+    </div>
+    <div class="code-wrap">
+      <div class="code-bar">
+        <span class="code-lang">R &middot; Resumable Loop</span>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      </div>
+<pre><code><span class="fn">CE_data_for_AI_resumable</span> &lt;- <span class="kw">function</span>(ce_data,
+                                       save_interval <span class="op">=</span> <span class="num">100</span>,
+                                       output_file <span class="op">=</span> <span class="str">"ai_results_temp.rds"</span>) {
+
+  <span class="cm"># Pivot to wide: one row per respondent x choice set</span>
+  choice_sets &lt;- ce_data <span class="op">%&gt;%</span>
+    <span class="fn">filter</span>(Alt <span class="op">%in%</span> <span class="fn">c</span>(<span class="num">1</span>, <span class="num">2</span>)) <span class="op">%&gt;%</span>
+    <span class="fn">group_by</span>(RID, Set) <span class="op">%&gt;%</span>
+    <span class="fn">summarise</span>(
+      gender       <span class="op">=</span> <span class="fn">first</span>(Gender), age          <span class="op">=</span> <span class="fn">first</span>(Age),
+      edu          <span class="op">=</span> <span class="fn">first</span>(Education), income     <span class="op">=</span> <span class="fn">first</span>(Income),
+      price_paid   <span class="op">=</span> <span class="fn">first</span>(Price_paid), human_choice <span class="op">=</span> <span class="fn">first</span>(Choose),
+      price1       <span class="op">=</span> Price[Alt <span class="op">==</span> <span class="num">1</span>], origins1 <span class="op">=</span> Origin[Alt <span class="op">==</span> <span class="num">1</span>],
+      method1      <span class="op">=</span> Method[Alt <span class="op">==</span> <span class="num">1</span>], review1  <span class="op">=</span> Review[Alt <span class="op">==</span> <span class="num">1</span>],
+      bestuse1     <span class="op">=</span> Dates[Alt <span class="op">==</span> <span class="num">1</span>],
+      price2       <span class="op">=</span> Price[Alt <span class="op">==</span> <span class="num">2</span>], origins2 <span class="op">=</span> Origin[Alt <span class="op">==</span> <span class="num">2</span>],
+      method2      <span class="op">=</span> Method[Alt <span class="op">==</span> <span class="num">2</span>], review2  <span class="op">=</span> Review[Alt <span class="op">==</span> <span class="num">2</span>],
+      bestuse2     <span class="op">=</span> Dates[Alt <span class="op">==</span> <span class="num">2</span>],
+      .groups <span class="op">=</span> <span class="str">"drop"</span>
+    )
+
+  <span class="cm"># Resume from checkpoint if it exists</span>
+  <span class="kw">if</span> (<span class="fn">file.exists</span>(output_file)) {
+    <span class="fn">cat</span>(<span class="str">"Checkpoint found. Resuming...\n"</span>)
+    choice_sets &lt;- <span class="fn">readRDS</span>(output_file)
+    start_row   &lt;- <span class="fn">sum</span>(<span class="op">!</span><span class="fn">is.na</span>(choice_sets$AI_Choice)) <span class="op">+</span> <span class="num">1</span>
+  } <span class="kw">else</span> {
+    choice_sets$AI_Choice &lt;- NA_character_
+    start_row &lt;- <span class="num">1</span>
+  }
+
+  total_rows &lt;- <span class="fn">nrow</span>(choice_sets)
+
+  <span class="kw">for</span> (i <span class="kw">in</span> start_row<span class="op">:</span>total_rows) {
+    row &lt;- choice_sets[i, ]
+    choice_sets$AI_Choice[i] &lt;- <span class="fn">CE_Choice</span>(
+      gender = row$gender, age = row$age, edu = row$edu, income = row$income,
+      price_paid = row$price_paid,
+      price1 = row$price1, origins1 = row$origins1, method1 = row$method1,
+      review1 = row$review1, bestuse1 = row$bestuse1,
+      price2 = row$price2, origins2 = row$origins2, method2 = row$method2,
+      review2 = row$review2, bestuse2 = row$bestuse2
+    )
+    <span class="kw">if</span> (i <span class="op">%%</span> save_interval <span class="op">==</span> <span class="num">0</span> <span class="op">||</span> i <span class="op">==</span> total_rows) {
+      <span class="fn">saveRDS</span>(choice_sets, output_file)
+      <span class="fn">cat</span>(<span class="fn">sprintf</span>(<span class="str">"Checkpoint: %d / %d complete\n"</span>, i, total_rows))
+    }
+  }
+  <span class="kw">return</span>(choice_sets)
+}
+
+<span class="cm"># Accuracy evaluation</span>
+ai_results       &lt;- <span class="fn">readRDS</span>(<span class="str">"ai_results_temp.rds"</span>)
+ai_results$match &lt;- ai_results$AI_Choice <span class="op">==</span> ai_results$human_choice
+<span class="fn">mean</span>(ai_results$match, na.rm <span class="op">=</span> <span class="kw">TRUE</span>)              <span class="cm"># overall accuracy</span>
+<span class="fn">prop.table</span>(<span class="fn">table</span>(ai_results$human_choice))  <span class="cm"># human distribution</span>
+<span class="fn">prop.table</span>(<span class="fn">table</span>(ai_results$AI_Choice))    <span class="cm"># AI distribution</span></code></pre>
+    </div>
+  </div>
+
+  <!-- 06 -->
+  <div class="section" id="s6">
+    <div class="section-header">
+      <span class="section-num">06</span>
+      <div class="section-title-group">
+        <div class="section-title">Conditional Logit &mdash; Human vs. AI</div>
+        <div class="section-desc">Estimate parallel mlogit models on real survey choices and AI-predicted choices; compare willingness-to-pay estimates</div>
+        <div class="tags">
+          <span class="tag tag-r">R</span>
+          <span class="tag tag-stat">mlogit &middot; gmnl</span>
+          <span class="tag tag-stat">WTP Analysis</span>
+        </div>
+      </div>
+    </div>
+    <div class="code-wrap">
+      <div class="code-bar">
+        <span class="code-lang">R &middot; mlogit / gmnl</span>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      </div>
+<pre><code><span class="kw">library</span>(gmnl); <span class="kw">library</span>(mlogit)
+
+<span class="cm"># -- Human choice model -----------------------------------------------</span>
+ce_data$Choices &lt;- <span class="fn">ifelse</span>(ce_data$Choices, <span class="num">1</span>, <span class="num">0</span>)
+data_long &lt;- ce_data <span class="op">%&gt;%</span>
+  <span class="fn">select</span>(RID, Set, Alt, Price, O1<span class="op">:</span>O5, M1<span class="op">:</span>M3, R1<span class="op">:</span>R3, D1<span class="op">:</span>D3, Choices, none)
+
+human_mlogit &lt;- <span class="fn">mlogit.data</span>(
+  data       <span class="op">=</span> data_long, choice <span class="op">=</span> <span class="str">"Choices"</span>, shape <span class="op">=</span> <span class="str">"long"</span>,
+  alt.levels <span class="op">=</span> <span class="fn">c</span>(<span class="str">"A"</span>, <span class="str">"B"</span>, <span class="str">"none"</span>), id.var <span class="op">=</span> <span class="str">"RID"</span>
+)
+Human_CE &lt;- <span class="fn">mlogit</span>(
+  Choices <span class="op">~</span> <span class="num">0</span> <span class="op">+</span> Price <span class="op">+</span> O2 <span class="op">+</span> O3 <span class="op">+</span> O4 <span class="op">+</span> O5 <span class="op">+</span> M2 <span class="op">+</span> M3 <span class="op">+</span>
+              R2 <span class="op">+</span> R3 <span class="op">+</span> D2 <span class="op">+</span> D3 <span class="op">+</span> none,
+  data <span class="op">=</span> human_mlogit
+)
+<span class="fn">summary</span>(Human_CE)
+<span class="op">-</span><span class="fn">wtp.gmnl</span>(Human_CE, wrt <span class="op">=</span> <span class="str">"price"</span>)    <span class="cm"># WTP estimates</span>
+
+<span class="cm"># -- AI choice model --------------------------------------------------</span>
+<span class="cm"># Expand AI choices to match long format (3 alternatives per set)</span>
+ai_choice &lt;- ai_results <span class="op">%&gt;%</span>
+  <span class="fn">select</span>(AI_Choice) <span class="op">%&gt;%</span>
+  <span class="fn">slice</span>(<span class="fn">rep</span>(<span class="num">1</span><span class="op">:</span><span class="fn">n</span>(), each <span class="op">=</span> <span class="num">3</span>))
+
+ai_data &lt;- <span class="fn">cbind</span>(ai_choice, data_long) <span class="op">%&gt;%</span>
+  <span class="fn">mutate</span>(ai_choose <span class="op">=</span> <span class="fn">ifelse</span>(AI_Choice <span class="op">==</span> Alt, <span class="num">1</span>, <span class="num">0</span>))
+
+ai_mlogit &lt;- <span class="fn">mlogit.data</span>(
+  data       <span class="op">=</span> ai_data, choice <span class="op">=</span> <span class="str">"ai_choose"</span>, shape <span class="op">=</span> <span class="str">"long"</span>,
+  alt.levels <span class="op">=</span> <span class="fn">c</span>(<span class="str">"A"</span>, <span class="str">"B"</span>, <span class="str">"none"</span>), id.var <span class="op">=</span> <span class="str">"RID"</span>
+)
+AI_CE &lt;- <span class="fn">mlogit</span>(
+  ai_choose <span class="op">~</span> <span class="num">0</span> <span class="op">+</span> Price <span class="op">+</span> O2 <span class="op">+</span> O3 <span class="op">+</span> O4 <span class="op">+</span> O5 <span class="op">+</span> M2 <span class="op">+</span> M3 <span class="op">+</span>
+               R2 <span class="op">+</span> R3 <span class="op">+</span> D2 <span class="op">+</span> D3 <span class="op">+</span> none,
+  data <span class="op">=</span> ai_mlogit
+)
+<span class="fn">summary</span>(AI_CE)
+<span class="op">-</span><span class="fn">wtp.gmnl</span>(AI_CE, wrt <span class="op">=</span> <span class="str">"price"</span>)</code></pre>
+    </div>
+  </div>
+
+  <!-- 07 -->
+  <div class="section" id="s7">
+    <div class="section-header">
+      <span class="section-num">07</span>
+      <div class="section-title-group">
+        <div class="section-title">Across-Person Training &mdash; 70/30 Split</div>
+        <div class="section-desc">Extract aggregate preference patterns from 70% of respondents; inject as context when prompting predictions for the held-out 30%</div>
+        <div class="tags">
+          <span class="tag tag-ai">Few-Shot Prompting</span>
+          <span class="tag tag-r">R</span>
+          <span class="tag tag-stat">Train / Test</span>
+        </div>
+      </div>
+    </div>
+    <div class="code-wrap">
+      <div class="code-bar">
+        <span class="code-lang">R &middot; Across-Person Pipeline</span>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      </div>
+<pre><code><span class="cm"># -- Split by respondent ID ----------------------------------------</span>
+<span class="fn">CE_data_train_test_split</span> &lt;- <span class="kw">function</span>(ce_data, train_proportion <span class="op">=</span> <span class="num">0.7</span>) {
+  <span class="fn">set.seed</span>(<span class="num">123</span>)
+  all_rids   &lt;- <span class="fn">unique</span>(ce_data$RID)
+  train_rids &lt;- <span class="fn">sample</span>(all_rids, <span class="fn">floor</span>(<span class="fn">length</span>(all_rids) <span class="op">*</span> train_proportion))
+  test_rids  &lt;- <span class="fn">setdiff</span>(all_rids, train_rids)
+
+  <span class="fn">list</span>(
+    train_data        <span class="op">=</span> ce_data <span class="op">%&gt;%</span> <span class="fn">filter</span>(RID <span class="op">%in%</span> train_rids),
+    test_data         <span class="op">=</span> ce_data <span class="op">%&gt;%</span> <span class="fn">filter</span>(RID <span class="op">%in%</span> test_rids),
+    train_respondents <span class="op">=</span> train_rids, test_respondents <span class="op">=</span> test_rids
+  )
+}
+
+<span class="cm"># -- Summarise training-set preference patterns -------------------</span>
+<span class="fn">summarize_training_patterns</span> &lt;- <span class="kw">function</span>(train_data) {
+  wide &lt;- train_data <span class="op">%&gt;%</span>
+    <span class="fn">filter</span>(Alt <span class="op">%in%</span> <span class="fn">c</span>(<span class="num">1</span>, <span class="num">2</span>)) <span class="op">%&gt;%</span>
+    <span class="fn">group_by</span>(RID, Set) <span class="op">%&gt;%</span>
+    <span class="fn">summarise</span>(<span class="fn">across</span>(<span class="fn">everything</span>(), first), .groups <span class="op">=</span> <span class="str">"drop"</span>)
+
+  <span class="fn">list</span>(
+    overall      <span class="op">=</span> wide <span class="op">%&gt;%</span> <span class="fn">count</span>(choice) <span class="op">%&gt;%</span>
+                   <span class="fn">mutate</span>(pct <span class="op">=</span> n <span class="op">/</span> <span class="fn">sum</span>(n) <span class="op">*</span> <span class="num">100</span>),
+
+    price_effect <span class="op">=</span> wide <span class="op">%&gt;%</span> <span class="fn">filter</span>(choice <span class="op">%in%</span> <span class="fn">c</span>(<span class="num">1</span>, <span class="num">2</span>)) <span class="op">%&gt;%</span>
+                   <span class="fn">mutate</span>(chosen_price <span class="op">=</span> <span class="fn">ifelse</span>(choice <span class="op">==</span> <span class="num">1</span>, price1, price2)) <span class="op">%&gt;%</span>
+                   <span class="fn">summarise</span>(avg <span class="op">=</span> <span class="fn">mean</span>(chosen_price), sd  <span class="op">=</span> <span class="fn">sd</span>(chosen_price),
+                             mn  <span class="op">=</span> <span class="fn">min</span>(chosen_price),  mx  <span class="op">=</span> <span class="fn">max</span>(chosen_price)),
+
+    method_pref  <span class="op">=</span> wide <span class="op">%&gt;%</span> <span class="fn">filter</span>(choice <span class="op">%in%</span> <span class="fn">c</span>(<span class="num">1</span>, <span class="num">2</span>)) <span class="op">%&gt;%</span>
+                   <span class="fn">mutate</span>(chosen <span class="op">=</span> <span class="fn">ifelse</span>(choice <span class="op">==</span> <span class="num">1</span>, method1, method2)) <span class="op">%&gt;%</span>
+                   <span class="fn">count</span>(chosen) <span class="op">%&gt;%</span> <span class="fn">mutate</span>(pct <span class="op">=</span> n <span class="op">/</span> <span class="fn">sum</span>(n) <span class="op">*</span> <span class="num">100</span>) <span class="op">%&gt;%</span>
+                   <span class="fn">arrange</span>(<span class="fn">desc</span>(pct))
+  )
+}
+
+<span class="cm"># -- Run analysis --------------------------------------------------</span>
+results_across &lt;- <span class="fn">CE_data_for_AI_with_training</span>(
+  ce_data          <span class="op">=</span> ce_data,
+  train_proportion <span class="op">=</span> <span class="num">0.7</span>,
+  save_interval    <span class="op">=</span> <span class="num">100</span>,
+  output_file      <span class="op">=</span> <span class="str">"ai_results_with_training.rds"</span>
+)
+<span class="fn">print</span>(<span class="fn">paste</span>(<span class="str">"Accuracy:"</span>, <span class="fn">round</span>(results_across$accuracy <span class="op">*</span> <span class="num">100</span>, <span class="num">2</span>), <span class="str">"%"</span>))</code></pre>
+    </div>
+  </div>
+
+  <!-- 08 -->
+  <div class="section" id="s8">
+    <div class="section-header">
+      <span class="section-num">08</span>
+      <div class="section-title-group">
+        <div class="section-title">Within-Person Training &mdash; First 7 &rarr; Last 7</div>
+        <div class="section-desc">Each respondent's first 7 actual choices (with full attribute detail) are injected as history; predict their remaining 7 choice sets</div>
+        <div class="tags">
+          <span class="tag tag-ai">In-Context Learning</span>
+          <span class="tag tag-r">R</span>
+          <span class="tag tag-stat">Within-Person</span>
+        </div>
+      </div>
+    </div>
+    <div class="code-wrap">
+      <div class="code-bar">
+        <span class="code-lang">R &middot; Within-Person Pipeline</span>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      </div>
+<pre><code><span class="fn">CE_data_within_person</span> &lt;- <span class="kw">function</span>(ce_data, n_training_sets <span class="op">=</span> <span class="num">7</span>,
+                                   save_interval <span class="op">=</span> <span class="num">100</span>,
+                                   output_file <span class="op">=</span> <span class="str">"ai_results_within_person.rds"</span>) {
+
+  all_sets &lt;- ce_data <span class="op">%&gt;%</span>
+    <span class="fn">filter</span>(Alt <span class="op">%in%</span> <span class="fn">c</span>(<span class="num">1</span>, <span class="num">2</span>)) <span class="op">%&gt;%</span>
+    <span class="fn">group_by</span>(RID, Set) <span class="op">%&gt;%</span>
+    <span class="fn">summarise</span>(
+      gender <span class="op">=</span> <span class="fn">first</span>(Gender), age    <span class="op">=</span> <span class="fn">first</span>(Age),
+      income <span class="op">=</span> <span class="fn">first</span>(Income),  edu    <span class="op">=</span> <span class="fn">first</span>(Education),
+      human_choice <span class="op">=</span> <span class="fn">first</span>(Choose),
+      price1  <span class="op">=</span> Price[Alt <span class="op">==</span> <span class="num">1</span>], method1  <span class="op">=</span> Method[Alt <span class="op">==</span> <span class="num">1</span>],
+      origins1<span class="op">=</span> Origin[Alt <span class="op">==</span> <span class="num">1</span>], review1  <span class="op">=</span> Review[Alt <span class="op">==</span> <span class="num">1</span>],
+      bestuse1<span class="op">=</span> Dates[Alt <span class="op">==</span> <span class="num">1</span>],
+      price2  <span class="op">=</span> Price[Alt <span class="op">==</span> <span class="num">2</span>], method2  <span class="op">=</span> Method[Alt <span class="op">==</span> <span class="num">2</span>],
+      origins2<span class="op">=</span> Origin[Alt <span class="op">==</span> <span class="num">2</span>], review2  <span class="op">=</span> Review[Alt <span class="op">==</span> <span class="num">2</span>],
+      bestuse2<span class="op">=</span> Dates[Alt <span class="op">==</span> <span class="num">2</span>],
+      .groups <span class="op">=</span> <span class="str">"drop"</span>
+    ) <span class="op">%&gt;%</span> <span class="fn">arrange</span>(RID, Set)
+
+  train_sets &lt;- all_sets <span class="op">%&gt;%</span> <span class="fn">filter</span>(Set <span class="op">&lt;=</span> n_training_sets)
+  test_sets  &lt;- all_sets <span class="op">%&gt;%</span> <span class="fn">filter</span>(Set <span class="op">&gt;</span>  n_training_sets)
+  test_sets$AI_Choice &lt;- NA_character_
+
+  <span class="kw">for</span> (i <span class="kw">in</span> <span class="num">1</span><span class="op">:</span><span class="fn">nrow</span>(test_sets)) {
+    row     &lt;- test_sets[i, ]
+    history &lt;- train_sets <span class="op">%&gt;%</span> <span class="fn">filter</span>(RID <span class="op">==</span> row$RID) <span class="op">%&gt;%</span> <span class="fn">arrange</span>(Set)
+
+    <span class="cm"># Build natural-language history string</span>
+    lines &lt;- <span class="fn">sapply</span>(<span class="fn">seq_len</span>(<span class="fn">nrow</span>(history)), <span class="kw">function</span>(j) {
+      h &lt;- history[j, ]
+      <span class="kw">if</span>      (h$human_choice <span class="op">==</span> <span class="num">1</span>)
+        <span class="fn">sprintf</span>(<span class="str">"Set %d: Option 1 — %s, %s, %s, %s review, $%.2f/lb"</span>,
+                h$Set, h$method1, h$origins1, h$bestuse1, h$review1, h$price1)
+      <span class="kw">else if</span> (h$human_choice <span class="op">==</span> <span class="num">2</span>)
+        <span class="fn">sprintf</span>(<span class="str">"Set %d: Option 2 — %s, %s, %s, %s review, $%.2f/lb"</span>,
+                h$Set, h$method2, h$origins2, h$bestuse2, h$review2, h$price2)
+      <span class="kw">else</span>
+        <span class="fn">sprintf</span>(<span class="str">"Set %d: Option 3 (neither)"</span>, h$Set)
+    })
+
+    history_text &lt;- <span class="fn">paste0</span>(
+      <span class="str">"\nYour previous "</span>, <span class="fn">nrow</span>(history), <span class="str">" choices:\n"</span>,
+      <span class="fn">paste</span>(lines, collapse <span class="op">=</span> <span class="str">"\n"</span>),
+      <span class="str">"\n\nNow making choice set "</span>, row$Set, <span class="str">" of 14."</span>,
+      <span class="str">"\nIdentify your preference patterns and stay consistent."</span>
+    )
+
+    test_sets$AI_Choice[i] &lt;- <span class="fn">CE_Choice_WithHistory</span>(
+      gender <span class="op">=</span> row$gender, age <span class="op">=</span> row$age, edu <span class="op">=</span> row$edu,
+      income <span class="op">=</span> row$income, price_paid <span class="op">=</span> row$price_paid,
+      price1 <span class="op">=</span> row$price1, origins1 <span class="op">=</span> row$origins1, method1 <span class="op">=</span> row$method1,
+      review1 <span class="op">=</span> row$review1, bestuse1 <span class="op">=</span> row$bestuse1,
+      price2 <span class="op">=</span> row$price2, origins2 <span class="op">=</span> row$origins2, method2 <span class="op">=</span> row$method2,
+      review2 <span class="op">=</span> row$review2, bestuse2 <span class="op">=</span> row$bestuse2,
+      history_text <span class="op">=</span> history_text
+    )
+  }
+
+  test_sets$AI_Choice_num &lt;- <span class="fn">as.numeric</span>(test_sets$AI_Choice)
+  accuracy &lt;- <span class="fn">mean</span>(test_sets$AI_Choice_num <span class="op">==</span> test_sets$human_choice, na.rm <span class="op">=</span> <span class="kw">TRUE</span>)
+  <span class="fn">cat</span>(<span class="fn">sprintf</span>(<span class="str">"Within-Person Accuracy: %.2f%%\n"</span>, accuracy <span class="op">*</span> <span class="num">100</span>))
+  <span class="fn">print</span>(<span class="fn">table</span>(Actual <span class="op">=</span> test_sets$human_choice, Predicted <span class="op">=</span> test_sets$AI_Choice_num))
+  <span class="kw">return</span>(<span class="fn">list</span>(results <span class="op">=</span> test_sets, accuracy <span class="op">=</span> accuracy))
+}
+
+<span class="cm"># -- Compare approaches --------------------------------------------</span>
+comparison &lt;- <span class="fn">data.frame</span>(
+  Approach <span class="op">=</span> <span class="fn">c</span>(<span class="str">"Across-Person (70/30)"</span>, <span class="str">"Within-Person (7 of 14)"</span>),
+  Accuracy <span class="op">=</span> <span class="fn">c</span>(results_across$accuracy, results_within$accuracy) <span class="op">*</span> <span class="num">100</span>,
+  N_Test   <span class="op">=</span> <span class="fn">c</span>(<span class="fn">nrow</span>(results_across$results), <span class="fn">nrow</span>(results_within$results))
+)
+<span class="fn">print</span>(comparison)</code></pre>
+    </div>
+  </div>
+
+  <footer>
+    <p>Dinglin &middot; Applied Economics PhD &middot; University of Florida</p>
+    <div class="footer-dots">
+      <span class="fd1"></span>
+      <span class="fd2"></span>
+      <span class="fd3"></span>
+    </div>
+  </footer>
+
+</div>
+
+<script>
+  function copyCode(btn) {
+    const pre = btn.closest('.code-wrap').querySelector('pre');
+    navigator.clipboard.writeText(pre.innerText).then(() => {
+      btn.textContent = 'copied!';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('copied'); }, 1800);
+    });
+  }
+</script>
+</body>
+</html>
